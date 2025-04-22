@@ -6,6 +6,7 @@ import {CartService} from "../../../shared/services/cart.service";
 import {CartType} from "../../../../types/cart.type";
 import {environment} from "../../../../environments/environment";
 import {DefaultResponseType} from "../../../../types/default-response.type";
+import {AuthService} from "../../../core/auth/auth.service";
 
 @Component({
   selector: 'app-cart',
@@ -44,8 +45,10 @@ export class CartComponent implements OnInit {
   serverStaticPath = environment.serverStaticPath;
   totalAmount: number = 0;
   totalCount: number = 0;
+  count: number = 0;
+  isLogged: boolean = false;
 
-  constructor(private productService: ProductService, private cartService: CartService) {
+  constructor(private productService: ProductService, private cartService: CartService, private authService: AuthService) {
   }
 
   extraProducts: ProductType[] = []
@@ -64,7 +67,28 @@ export class CartComponent implements OnInit {
         this.cart = data as CartType;
         this.calculateTotal();
       });
+
+    this.getCartCount();
+
+    // Подписываемся на статус авторизации и обновляем корзину при изменении
+    this.authService.isLogged$.subscribe((isLoggedIn: boolean) => {
+      this.isLogged = isLoggedIn;
+      this.getCartCount(); // Обновляем количество товаров в корзине при авторизации
+    });
+
+
   }
+  getCartCount(): void {
+    this.cartService.getCartCount()
+      .subscribe((data: { count: number } | DefaultResponseType) => {
+        if ((data as DefaultResponseType).error !== undefined) {
+          throw new Error((data as DefaultResponseType).message);
+        }
+        this.count = (data as { count: number }).count; // Обновляем количество товаров
+        console.log(this.count); // Выводим в консоль
+      });
+  }
+
 
   // Подсчет суммы в корзине
   calculateTotal(): void {

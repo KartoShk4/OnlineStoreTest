@@ -1,4 +1,4 @@
-import {Component, Input, OnInit} from '@angular/core';
+import {Component, ElementRef, HostListener, Input, OnInit} from '@angular/core';
 import {ProductService} from "../../../shared/services/product.service";
 import {ProductType} from "../../../../types/product.type";
 import {CategoryService} from "../../../shared/services/category.service";
@@ -34,6 +34,7 @@ export class CatalogComponent implements OnInit {
     {name: "По убыванию цены", value: "price-desc"},
   ];
 
+
   pages: number[] = [];
   cart: CartType | null = null;
   favoriteProducts: FavoriteType[] | null = null;
@@ -44,7 +45,8 @@ export class CatalogComponent implements OnInit {
               private cartService: CartService,
               private authService: AuthService,
               private favoriteService: FavoriteService,
-              private router: Router) {
+              private router: Router,
+              private eRef: ElementRef) {
   }
 
   ngOnInit(): void {
@@ -175,7 +177,6 @@ export class CatalogComponent implements OnInit {
       });
   };
 
-
   removeAppliedFilter(appliedFilter: AppliedFilterType) {
     if (appliedFilter.urlParam === 'heightFrom' || appliedFilter.urlParam === 'heightTo' ||
       appliedFilter.urlParam === 'diameterFrom' || appliedFilter.urlParam === 'diameterTo') {
@@ -190,25 +191,31 @@ export class CatalogComponent implements OnInit {
     });
   }
 
-  toggleSorting() {
+  toggleSorting(): void {
     this.sortingOpen = !this.sortingOpen;
   }
 
-  sort(value: string) {
+  sort(value: string): void {
     this.activeParams.sort = value;
     this.router.navigate(['/catalog'], {
       queryParams: this.activeParams
     });
   }
 
-  openPage(page: number) {
+  @HostListener('document:click', ['$event.target'])
+  onClick(element: Element): void {
+    if (!element.closest('.catalog-sorting')) this.sortingOpen = false;
+  }
+
+
+  openPage(page: number): void {
     this.activeParams.page = page;
     this.router.navigate(['/catalog'], {
       queryParams: this.activeParams
     });
   }
 
-  openNextPage() {
+  openNextPage(): void {
     if (this.activeParams.page && this.activeParams.page < this.pages.length) {
       this.activeParams.page++;
       this.router.navigate(['/catalog'], {
@@ -217,7 +224,7 @@ export class CatalogComponent implements OnInit {
     }
   }
 
-  openPrevPage() {
+  openPrevPage(): void {
     if (this.activeParams.page && this.activeParams.page > 1) {
       this.activeParams.page--;
       this.router.navigate(['/catalog'], {
